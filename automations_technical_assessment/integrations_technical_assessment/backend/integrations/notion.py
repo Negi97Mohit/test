@@ -12,8 +12,8 @@ from integrations.integration_item import IntegrationItem
 
 from redis_client import add_key_value_redis, get_value_redis, delete_key_redis
 
-CLIENT_ID = 'XXX'
-CLIENT_SECRET = 'XXX'
+CLIENT_ID = '177d872b-594c-8067-8c73-00370bdf57b7'
+CLIENT_SECRET = 'secret_LNG9PZYAIBWDbNGlugIqJ5stUgOiQghcovJb4Yg3nic'
 encoded_client_id_secret = base64.b64encode(f'{CLIENT_ID}:{CLIENT_SECRET}'.encode()).decode()
 
 REDIRECT_URI = 'http://localhost:8000/integrations/notion/oauth2callback'
@@ -135,8 +135,7 @@ def create_integration_item_metadata_object(
 
     return integration_item_metadata
 
-async def get_items_notion(credentials) -> list[IntegrationItem]:
-    """Aggregates all metadata relevant for a notion integration"""
+async def get_items_notion(credentials) -> list[dict]:
     credentials = json.loads(credentials)
     response = requests.post(
         'https://api.notion.com/v1/search',
@@ -147,12 +146,17 @@ async def get_items_notion(credentials) -> list[IntegrationItem]:
     )
 
     if response.status_code == 200:
-        results = response.json()['results']
-        list_of_integration_item_metadata = []
-        for result in results:
-            list_of_integration_item_metadata.append(
-                create_integration_item_metadata_object(result)
-            )
+        results = response.json().get('results', [])
+        return [
+            {
+                'id': result['id'],
+                'name': result.get('properties', {}).get('title', {}).get('title', [{}])[0].get('text', {}).get('content', 'Untitled'),
+            }
+            for result in results
+        ]
+    else:
+        raise HTTPException(status_code=response.status_code, detail=response.text)
 
-        print(list_of_integration_item_metadata)
-    return
+async def disconnect_notion(user_id, org_id):
+    await delete_key_redis(f'notion_credentials:{org_id}:{user_id}')
+    return {"message": "Disconnected from Notion"}

@@ -1,12 +1,13 @@
 from fastapi import FastAPI, Form, Request
 from fastapi.middleware.cors import CORSMiddleware
 
-from integrations.airtable import authorize_airtable, get_items_airtable, oauth2callback_airtable, get_airtable_credentials
-from integrations.notion import authorize_notion, get_items_notion, oauth2callback_notion, get_notion_credentials
-from integrations.hubspot import authorize_hubspot, get_hubspot_credentials, get_items_hubspot, oauth2callback_hubspot
+from integrations.airtable import authorize_airtable, get_items_airtable, oauth2callback_airtable, get_airtable_credentials, disconnect_airtable
+from integrations.notion import authorize_notion, get_items_notion, oauth2callback_notion, get_notion_credentials, disconnect_notion
+from integrations.hubspot import authorize_hubspot, get_hubspot_credentials, get_items_hubspot, oauth2callback_hubspot, disconnect_hubspot
 
 app = FastAPI()
 
+# CORS configuration
 origins = [
     "http://localhost:3000",  # React app address
 ]
@@ -41,6 +42,10 @@ async def get_airtable_credentials_integration(user_id: str = Form(...), org_id:
 async def get_airtable_items(credentials: str = Form(...)):
     return await get_items_airtable(credentials)
 
+@app.post('/integrations/airtable/disconnect')
+async def disconnect_airtable_integration(user_id: str = Form(...), org_id: str = Form(...)):
+    return await disconnect_airtable(user_id, org_id)
+
 
 # Notion
 @app.post('/integrations/notion/authorize')
@@ -59,6 +64,11 @@ async def get_notion_credentials_integration(user_id: str = Form(...), org_id: s
 async def get_notion_items(credentials: str = Form(...)):
     return await get_items_notion(credentials)
 
+@app.post('/integrations/notion/disconnect')
+async def disconnect_notion_integration(user_id: str = Form(...), org_id: str = Form(...)):
+    return await disconnect_notion(user_id, org_id)
+
+
 # HubSpot
 @app.post('/integrations/hubspot/authorize')
 async def authorize_hubspot_integration(user_id: str = Form(...), org_id: str = Form(...)):
@@ -73,5 +83,9 @@ async def get_hubspot_credentials_integration(user_id: str = Form(...), org_id: 
     return await get_hubspot_credentials(user_id, org_id)
 
 @app.post('/integrations/hubspot/get_hubspot_items')
-async def load_slack_data_integration(credentials: str = Form(...)):
+async def load_hubspot_data_integration(credentials: str = Form(...)):
     return await get_items_hubspot(credentials)
+
+@app.post('/integrations/hubspot/disconnect')
+async def disconnect_hubspot_integration(user_id: str = Form(...), org_id: str = Form(...)):
+    return await disconnect_hubspot(user_id, org_id)

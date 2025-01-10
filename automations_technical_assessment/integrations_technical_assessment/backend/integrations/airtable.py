@@ -170,3 +170,8 @@ async def get_items_airtable(credentials) -> list[IntegrationItem]:
 
     print(f'list_of_integration_item_metadata: {list_of_integration_item_metadata}')
     return list_of_integration_item_metadata
+
+
+async def disconnect_airtable(user_id, org_id):
+    await delete_key_redis(f'airtable_credentials:{org_id}:{user_id}')
+    return {"message": "Disconnected from Airtable"}
